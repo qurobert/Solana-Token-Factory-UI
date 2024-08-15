@@ -16,23 +16,15 @@
   </template>
   
   <script setup>
-  import { ref, computed, defineEmits } from 'vue';
-  import { useWallet, initWallet } from 'solana-wallets-vue';
-  import { Connection, PublicKey, clusterApiUrl, Keypair, Transaction, SystemProgram } from '@solana/web3.js';
+  import { ref, defineEmits } from 'vue';
+  import { useWallet } from 'solana-wallets-vue';
+  import { Connection, clusterApiUrl, Keypair, Transaction, SystemProgram } from '@solana/web3.js';
   import { MINT_SIZE, TOKEN_PROGRAM_ID, getMinimumBalanceForRentExemptMint, createInitializeMintInstruction} from '@solana/spl-token';
-  import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
   const mintCreated = ref(false);
   const mintAddress = ref('');
   const isProcessing = ref(false); // New state for button processing
   const emits = defineEmits(['mintCreated']);
-  const walletOptions = {
-  wallets: [
-    new PhantomWalletAdapter(),
-  ],
-  autoConnect: true,
-};
-initWallet(walletOptions);
 
   
   async function createTokenMint() {

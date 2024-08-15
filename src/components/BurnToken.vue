@@ -34,7 +34,6 @@
   const amount = ref(''); // Reactive variable to hold the amount
   const transactionStatus = ref('');
   const tokenBalance = ref('-1'); // Reactive variable to hold the token balance
-
   
   async function burnTokens() {
     try {

@@ -25,9 +25,24 @@ import TransferToken from './TransferToken.vue';
 import DelegateToken from './DelegateToken.vue';
 import BurnToken from './BurnToken.vue';
 import { ref } from 'vue';
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+  import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
+import { initWallet } from "solana-wallets-vue";
 
 const mintAddress = ref('');
 const tokenAccountAddress = ref('');
+const walletOptions = {
+  wallets: [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter({ network: WalletAdapterNetwork.Devnet }),
+  ],
+  autoConnect: true,
+};
+initWallet(walletOptions);
+
 
 function handleMintCreated(address) {
   mintAddress.value = address;

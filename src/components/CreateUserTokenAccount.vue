@@ -16,10 +16,10 @@
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue';
-  import { WalletMultiButton, useWallet, useAnchorWallet } from 'solana-wallets-vue';
-  import { Connection, PublicKey, clusterApiUrl, Keypair, Transaction, SystemProgram } from '@solana/web3.js';
-  import { MINT_SIZE, TOKEN_PROGRAM_ID, getMinimumBalanceForRentExemptMint, createInitializeMintInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction} from '@solana/spl-token';
+  import { ref } from 'vue';
+  import { useWallet } from 'solana-wallets-vue';
+  import { Connection, PublicKey, clusterApiUrl, Transaction } from '@solana/web3.js';
+  import { getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction} from '@solana/spl-token';
   
   const props = defineProps({
     mintAddress: Object
