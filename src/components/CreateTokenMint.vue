@@ -17,18 +17,34 @@
   
   <script setup>
   import { ref, computed, defineEmits } from 'vue';
-  import { WalletMultiButton, useWallet, useAnchorWallet } from 'solana-wallets-vue';
+  import { useWallet, initWallet } from 'solana-wallets-vue';
   import { Connection, PublicKey, clusterApiUrl, Keypair, Transaction, SystemProgram } from '@solana/web3.js';
   import { MINT_SIZE, TOKEN_PROGRAM_ID, getMinimumBalanceForRentExemptMint, createInitializeMintInstruction} from '@solana/spl-token';
-  
-  const { publicKey, sendTransaction } = useWallet();
+  import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+
   const mintCreated = ref(false);
   const mintAddress = ref('');
   const isProcessing = ref(false); // New state for button processing
   const emits = defineEmits(['mintCreated']);
+  const walletOptions = {
+  wallets: [
+    new PhantomWalletAdapter(),
+  ],
+  autoConnect: true,
+};
+initWallet(walletOptions);
+
   
   async function createTokenMint() {
   try {
+    const { publicKey, sendTransaction, disconnect, connect, connected, autoConnect } = useWallet();
+    // if (connected.value === false) {
+    //   disconnect.value = true
+    //   autoConnect.value = true
+    //   return;
+    // }
+    connect.value = true;
+    console.log('Creating mint account...', publicKey.value);
     isProcessing.value = true; // Set processing state to true when function starts
     const connection = new Connection(clusterApiUrl('devnet'));
     if (!publicKey.value) {

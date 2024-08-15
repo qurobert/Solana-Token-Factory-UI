@@ -1,22 +1,26 @@
 <template>
   <div class="form-section">
     <h2>Mint Tokens</h2>
-    <input type="number" v-model="amount" placeholder="Enter amount to mint" :disabled="isProcessing">
-    <button @click="mintTokens" :disabled="isProcessing || !amount">
-      {{ isProcessing ? 'Processing...' : 'Mint Tokens' }}
-    </button>
-    <div class="status-and-balance">
-    <p v-if="transactionStatus">{{ transactionStatus }}</p>
-    <button @click="getBalance">Get balance</button>
-    <p v-if="tokenBalance" class="balance-display">Balance: {{ tokenBalance }} tokens</p>
-  </div>
+    <div class="mint">
+        <input type="number" v-model="amount" placeholder="Enter amount to mint" :disabled="isProcessing">
+        <button @click="mintTokens" :disabled="isProcessing || !amount" class="mint-button">
+            {{ isProcessing ? 'Processing...' : 'Mint Tokens' }}
+        </button>
+        <p v-if="transactionStatus" class="transaction-status">{{ transactionStatus }}</p>
     </div>
+    <div class="status-and-balance">
+      <button @click="getBalance" :disabled="isBalanceLoading">
+      {{isBalanceLoading ? 'Processing...' : 'Get balance'}}
+      </button>
+      <p v-if="tokenBalance!=-1" class="balance-display">Balance: {{ tokenBalance }} tokens</p>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useWallet } from 'solana-wallets-vue';
-import { Connection, PublicKey, clusterApiUrl, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, clusterApiUrl, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { createMintToInstruction } from '@solana/spl-token';
 
 const props = defineProps({
@@ -26,19 +30,25 @@ const props = defineProps({
 
 const { publicKey, sendTransaction } = useWallet();
 const isProcessing = ref(false);
+const isBalanceLoading = ref(false);
 const amount = ref(''); // Reactive variable to hold the amount
 const transactionStatus = ref('');
-const tokenBalance = ref(''); // Reactive variable to hold the token balance
+const tokenBalance = ref('-1'); // Reactive variable to hold the token balance
 
 async function mintTokens() {
   try {
+    if (amount.value <= 0) {
+      console.error('Amount must be greater than 0');
+      transactionStatus.value = 'Amount must be greater than 0';
+      return;
+    }
     isProcessing.value = true;
     transactionStatus.value = '';
 
     const connection = new Connection(clusterApiUrl('devnet'));
     const mintPubkey = new PublicKey(props.mintAddress);
     const tokenAccountPubkey = new PublicKey(props.tokenAccountAddress);
-    const mintAmount = BigInt(amount.value); // Convert to the smallest unit
+    const mintAmount = BigInt(amount.value) * BigInt(10 ** 9); // Convert to the smallest unit
 
     let tx = new Transaction().add(
       createMintToInstruction(
@@ -53,16 +63,6 @@ async function mintTokens() {
     await connection.confirmTransaction(signature, 'confirmed');
     transactionStatus.value = `Minted ${amount.value} tokens successfully!`;
 
-    // // Fetch the new balance
-    // const balanceResult = await connection.getTokenAccountBalance(tokenAccountPubkey);
-    // // console.log('Balance result:', balanceResult);
-    // tokenBalance.value = balanceResult.value.amount // Adjust for decimals
-    // Delay fetching the new balance by 15 seconds
-    // setTimeout(async () => {
-    //   const balanceResult = await connection.getTokenAccountBalance(tokenAccountPubkey);
-    //   tokenBalance.value = balanceResult.value.amount; // Adjust for decimals
-    //   transactionStatus.value = ''; // Clear the transaction status
-    // }, 15000); // 15000 milliseconds = 15 seconds
   } catch (error) {
     console.error('Error during token minting:', error);
     transactionStatus.value = 'Failed to mint tokens.';
@@ -73,10 +73,14 @@ async function mintTokens() {
 
 async function getBalance() {
   try {
+    isBalanceLoading.value = true;
+    setTimeout(async () => {
     const connection = new Connection(clusterApiUrl('devnet'));
     const tokenAccountPubkey = new PublicKey(props.tokenAccountAddress);
     const balanceResult = await connection.getTokenAccountBalance(tokenAccountPubkey);
-    tokenBalance.value = balanceResult.value.amount;
+    tokenBalance.value = BigInt(balanceResult.value.amount) / BigInt(10 ** 9);
+      isBalanceLoading.value = false;
+    }, 15000);
   } catch (error) {
     console.error('Error fetching token balance:', error);
   }
@@ -120,9 +124,13 @@ async function getBalance() {
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
+.mint {
+  margin-bottom: 20px;
+}
+
 .transaction-status {
-  flex: 1;
-  margin-right: 10px; /* Space between status and balance */
+    display: inline-block;
+    float: right;
 }
 
 .balance-display {
@@ -133,6 +141,13 @@ async function getBalance() {
   font-weight: bold;
   margin-top: 10px;
   display: inline-block;
-  /* putt balance in left */
 }
+
+.status-and-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 </style>
+
